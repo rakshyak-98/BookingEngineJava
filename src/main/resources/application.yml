@@ -1,0 +1,121 @@
+spring:
+  application:
+    name: booking-engine-backend
+  profiles:
+    active: dev
+
+  # JPA Configuration
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+  # MySQL Configuration
+  datasource:
+    url: jdbc:mysql://localhost:3306/booking_engine?useSSL=false&serverTimezone=UTC
+    username: root
+    password: password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 20000
+
+  # MongoDB Configuration
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/booking_engine
+      auto-index-creation: true
+
+  # Jackson Configuration
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # Servlet Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Security
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          key-value: ${JWT_SECRET:your-secret-key-change-in-production}
+
+# Server Configuration
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.booking.engine: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/booking-engine.log
+    max-size: 10MB
+    max-history: 30
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Application Custom Configuration
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-secret-key-change-in-production}
+    expiration: 86400000
+    refresh-expiration: 604800000
+
+  aws:
+    region: us-east-1
+    s3:
+      bucket-name: booking-engine-uploads
+    sqs:
+      queue-url: https://sqs.us-east-1.amazonaws.com/123456789/booking-queue
+    dynamodb:
+      table-name: booking-cache
+
+  pagination:
+    default-page-size: 20
+    max-page-size: 100
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha

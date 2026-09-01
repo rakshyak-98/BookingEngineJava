@@ -1,0 +1,116 @@
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+.c9/
+*.launch
+.tern-port
+
+# Build
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+
+# Gradle
+.gradle/
+build/
+gradle-app.setting
+gradlew.bat
+.gradletasknamecache
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+*.lnk
+
+# Logs
+logs/
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.pfx
+*.p12
+**/application-secrets.properties
+**/application-secrets.yml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+.sqlite
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+*.cover
+coverage/
+jacoco-report/
+
+# SonarQube
+.sonarqube/
+sonar-project.properties
+
+# IDE plugins
+.idea_modules/
+.ruby-lsp
+
+# Application
+/logs/
+/temp/
+/tmp/
+uploads/
+downloads/
+*.tmp
+
+# OS temp
+thumbs.db
+.DS_Store

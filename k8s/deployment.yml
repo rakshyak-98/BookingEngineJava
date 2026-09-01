@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-engine
+  namespace: production
+  labels:
+    app: booking-engine
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: booking-engine
+  template:
+    metadata:
+      labels:
+        app: booking-engine
+        version: v1
+    spec:
+      serviceAccountName: booking-engine
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      containers:
+      - name: booking-engine
+        image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/booking-engine:latest
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: booking-engine-config
+              key: db.url
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: booking-engine-secret
+              key: db.username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: booking-engine-secret
+              key: db.password
+        - name: SPRING_DATA_MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: booking-engine-secret
+              key: mongodb.uri
+        - name: AWS_REGION
+          value: "us-east-1"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: booking-engine-secret
+              key: jwt.secret
+
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+
+        livenessProbe:
+          httpGet:
+            path: /api/actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /api/actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - booking-engine
+              topologyKey: kubernetes.io/hostname

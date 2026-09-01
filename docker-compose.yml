@@ -1,0 +1,106 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: booking-engine-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: booking_engine_dev
+      MYSQL_USER: booking_user
+      MYSQL_PASSWORD: booking_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - booking-engine-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  mongodb:
+    image: mongo:7.0
+    container_name: booking-engine-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - booking-engine-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      timeout: 20s
+      retries: 10
+
+  postgres:
+    image: postgres:15
+    container_name: booking-engine-postgres
+    environment:
+      POSTGRES_DB: booking_engine
+      POSTGRES_USER: booking_user
+      POSTGRES_PASSWORD: booking_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - booking-engine-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_user"]
+      timeout: 20s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: booking-engine-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - booking-engine-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: booking-engine-app
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/booking_engine_dev
+      SPRING_DATASOURCE_USERNAME: booking_user
+      SPRING_DATASOURCE_PASSWORD: booking_password
+      SPRING_DATA_MONGODB_URI: mongodb://admin:admin@mongodb:27017/booking_engine?authSource=admin
+      JAVA_OPTS: -Xmx1g -Xms512m
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - booking-engine-network
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  mongodb_data:
+  postgres_data:
+  redis_data:
+
+networks:
+  booking-engine-network:
+    driver: bridge

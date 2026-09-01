@@ -1,0 +1,33 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://prod-db.example.com:3306/booking_engine}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb+srv://user:pass@prod-mongo.mongodb.net/booking_engine}
+
+logging:
+  level:
+    root: WARN
+    com.booking.engine: INFO
+
+server:
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

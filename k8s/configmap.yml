@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-engine-config
+  namespace: production
+  labels:
+    app: booking-engine
+data:
+  # Database Configuration
+  db.url: "jdbc:mysql://booking-engine-mysql.default.svc.cluster.local:3306/booking_engine"
+
+  # MongoDB Configuration
+  mongodb.host: "booking-engine-mongodb.default.svc.cluster.local"
+  mongodb.port: "27017"
+
+  # AWS Configuration
+  aws.region: "us-east-1"
+  aws.s3.bucket: "booking-engine-uploads"
+  aws.dynamodb.table: "booking-cache"
+
+  # Application Configuration
+  app.name: "booking-engine"
+  app.version: "1.0.0"
+  app.environment: "production"
+
+  # Server Configuration
+  server.port: "8080"
+  server.servlet.context-path: "/api"
+
+  # Logging Configuration
+  logging.level.root: "INFO"
+  logging.level.com.booking.engine: "INFO"
+
+  # Actuator Configuration
+  management.endpoints.web.exposure.include: "health,info,metrics,prometheus"
+  management.endpoint.health.show-details: "when-authorized"
+
+  # Application Properties
+  app.pagination.default-page-size: "20"
+  app.pagination.max-page-size: "100"
+  app.jwt.expiration: "86400000"
+  app.jwt.refresh-expiration: "604800000"
