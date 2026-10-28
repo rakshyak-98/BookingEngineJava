@@ -74,6 +74,38 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Create inventory ledger table (append-only)
+CREATE TABLE IF NOT EXISTS inventory_ledger (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    inventory_key VARCHAR(100) NOT NULL,
+    sequence_number BIGINT NOT NULL,
+    entry_type VARCHAR(20) NOT NULL,
+    quantity_delta BIGINT NOT NULL,
+    balance_after BIGINT NOT NULL,
+    reference_type VARCHAR(50),
+    reference_id VARCHAR(100),
+    reverses_entry_id BIGINT,
+    reason VARCHAR(500),
+    idempotency_key VARCHAR(100) NOT NULL,
+    occurred_at DATETIME(6) NOT NULL,
+    previous_hash CHAR(64) NOT NULL,
+    entry_hash CHAR(64) NOT NULL,
+    CONSTRAINT uk_ledger_key_sequence UNIQUE (inventory_key, sequence_number),
+    CONSTRAINT uk_ledger_idempotency_key UNIQUE (idempotency_key),
+    CONSTRAINT uk_ledger_reverses_entry UNIQUE (reverses_entry_id),
+    CONSTRAINT fk_ledger_reverses_entry FOREIGN KEY (reverses_entry_id) REFERENCES inventory_ledger(id),
+    CONSTRAINT chk_ledger_balance_non_negative CHECK (balance_after >= 0),
+    INDEX idx_ledger_reference (inventory_key, reference_type, reference_id),
+    INDEX idx_ledger_occurred_at (inventory_key, occurred_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- The ledger is immutable: reject UPDATE and DELETE even from direct SQL.
+CREATE TRIGGER trg_inventory_ledger_no_update BEFORE UPDATE ON inventory_ledger
+    FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'inventory_ledger is append-only; post a reversal instead';
+
+CREATE TRIGGER trg_inventory_ledger_no_delete BEFORE DELETE ON inventory_ledger
+    FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'inventory_ledger is append-only; post a reversal instead';
+
 -- Insert sample data
 INSERT INTO users (email, password, first_name, last_name, phone, role, active)
 VALUES
